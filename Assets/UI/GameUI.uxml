@@ -1,0 +1,6 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:Label text="Label" name="FoodLabel" double-click-selects-word="false" style="-unity-font-definition: url(&quot;project://database/Assets/FPSFont/FPS%20Gaming%20Font/Square-Black.ttf?fileID=12800000&amp;guid=d7cffddcbc0cc8f4ebe6e28eb9804082&amp;type=3#Square-Black&quot;); color: rgb(255, 255, 255); -unity-text-align: upper-center; font-size: 20px; position: absolute; bottom: 0; left: 0; right: 0;" />
+    <ui:VisualElement name="GameOverPanel" style="flex-grow: 1; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.78);">
+        <ui:Label text="Game Over" name="GameOverMessage" style="-unity-font-definition: url(&quot;project://database/Assets/Roguelike2D/TutorialAssets/Fonts/PressStart2P-Regular.ttf?fileID=12800000&amp;guid=b284a6525342f44599e9ce79e37c2d61&amp;type=3#PressStart2P-Regular&quot;); color: rgb(255, 235, 205); font-size: 15px; align-items: center; justify-content: space-around;" />
+    </ui:VisualElement>
+</ui:UXML>
