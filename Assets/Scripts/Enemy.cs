@@ -2,12 +2,16 @@ using UnityEngine;
 
 public class Enemy : CellObject
 {
-    public int Health = 3;
-
-    private int m_CurrentHealth;
+    private CharacterStats m_Stats;
 
     private void Awake()
     {
+        m_Stats = GetComponent<CharacterStats>();
+        if (m_Stats == null)
+        {
+            Debug.LogError("Enemy is missing CharacterStats component!");
+        }
+
         GameManager.Instance.TurnManager.OnTick += TurnHappened;
     }
 
@@ -19,22 +23,24 @@ public class Enemy : CellObject
     public override void Init(Vector2Int coord)
     {
         base.Init(coord);
-        m_CurrentHealth = Health;
+        // Η ζωή του εχθρού πλέον ορίζεται από το CharacterStats
     }
 
+    // Όταν ο παίκτης προσπαθεί να μπει στο κελί με εχθρό
     public override bool PlayerWantsToEnter()
     {
-        m_CurrentHealth -= 1;
-
-        if (m_CurrentHealth <= 0)
+        var playerStats = GameManager.Instance.PlayerController.GetComponent<CharacterStats>();
+        if (playerStats != null && m_Stats != null)
         {
-            Destroy(gameObject);
+            // Ο παίκτης επιτίθεται στον εχθρό
+            m_Stats.TakeDamage(playerStats.Strength);
         }
 
+        // Ο παίκτης ΔΕΝ μπαίνει στο ίδιο κελί με τον εχθρό
         return false;
     }
 
-    bool MoveTo(Vector2Int coord)
+    private bool MoveTo(Vector2Int coord)
     {
         var board = GameManager.Instance.BoardManager;
         var targetCell = board.GetCellData(coord);
@@ -46,11 +52,11 @@ public class Enemy : CellObject
             return false;
         }
 
-        //remove enemy from current cell
+        // Αφαίρεση του εχθρού από το τρέχον κελί
         var currentCell = board.GetCellData(m_Cell);
         currentCell.ContainedObject = null;
 
-        //add it to the next cell
+        // Προσθήκη στο νέο κελί
         targetCell.ContainedObject = this;
         m_Cell = coord;
         transform.position = board.CellToWorld(coord);
@@ -58,14 +64,8 @@ public class Enemy : CellObject
         return true;
     }
 
-    void TurnHappened()
+    private void TurnHappened()
     {
-        // Assuming you have Animator reference
-
-        GetComponent<Animator>().SetTrigger("Attack");
-        GameManager.Instance.PlayerController.Damage();
-
-        //We added a public property that return the player current cell!
         var playerCell = GameManager.Instance.PlayerController.Cell;
 
         int xDist = playerCell.x - m_Cell.x;
@@ -77,17 +77,29 @@ public class Enemy : CellObject
         if ((xDist == 0 && absYDist == 1)
             || (yDist == 0 && absXDist == 1))
         {
-            //we are adjacent to the player, attack!
-            GameManager.Instance.ChangeFood(3);
+            // Δίπλα στον παίκτη -> επίθεση
+            GetComponent<Animator>().SetTrigger("Attack");
+
+            var playerStats = GameManager.Instance.PlayerController.GetComponent<CharacterStats>();
+            if (m_Stats != null && playerStats != null)
+            {
+                if (m_Stats.TryHit())
+                {
+                    playerStats.TakeDamage(m_Stats.Strength);
+                }
+                else
+                {
+                    Debug.Log("Enemy attack missed!");
+                }
+            }
         }
         else
         {
+            // Κίνηση προς τον παίκτη
             if (absXDist > absYDist)
             {
                 if (!TryMoveInX(xDist))
                 {
-                    //if our move was not successful (so no move and not attack)
-                    //we try to move along Y
                     TryMoveInY(yDist);
                 }
             }
@@ -101,31 +113,19 @@ public class Enemy : CellObject
         }
     }
 
-    bool TryMoveInX(int xDist)
+    private bool TryMoveInX(int xDist)
     {
-        //try to get closer in x
-
-        //player to our right
         if (xDist > 0)
-        {
             return MoveTo(m_Cell + Vector2Int.right);
-        }
 
-        //player to our left
         return MoveTo(m_Cell + Vector2Int.left);
     }
 
-    bool TryMoveInY(int yDist)
+    private bool TryMoveInY(int yDist)
     {
-        //try to get closer in y
-
-        //player on top
         if (yDist > 0)
-        {
             return MoveTo(m_Cell + Vector2Int.up);
-        }
 
-        //player below
         return MoveTo(m_Cell + Vector2Int.down);
     }
 }

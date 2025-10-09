@@ -12,6 +12,8 @@ public class PlayerController : MonoBehaviour
     public float MoveSpeed = 5.0f;
     public Animator animator;
     public Vector2Int Cell => m_CellPosition;
+
+
     private void Awake()
     {
         m_Animator = GetComponent<Animator>();
@@ -45,14 +47,22 @@ public class PlayerController : MonoBehaviour
     {
         m_IsGameOver = true;
     }
-    public void Damage()
+
+    public void Damage(int enemyStrength)
     {
-        animator.SetTrigger("Damaged");      // Trigger damage animation
-        GameManager.Instance.ChangeFood(-3); // Decrease food/health by 3
+        var stats = GetComponent<CharacterStats>();
+        stats.TakeDamage(enemyStrength);
+        animator.SetTrigger("Damaged");
     }
+
+
     public void Init()
     {
         m_IsGameOver = false;
+        GameManager.Instance.UpdateStatsUI(); // ενημέρωσε τα στατιστικά στην αρχή
+
+
+
     }
 
     private void Update()
@@ -66,6 +76,7 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
+        // Κίνηση προς τον στόχο
         if (m_IsMoving)
         {
             transform.position = Vector3.MoveTowards(transform.position, m_MoveTarget, MoveSpeed * Time.deltaTime);
@@ -78,6 +89,18 @@ public class PlayerController : MonoBehaviour
                 if (cellData.ContainedObject != null)
                     cellData.ContainedObject.PlayerEntered();
             }
+            return;
+        }
+
+        // --- WAIT TURN: κατανάλωση γύρου χωρίς κίνηση ---
+        // Space ή Numpad5 (προαιρετικά)
+        if ((Keyboard.current.spaceKey != null && Keyboard.current.spaceKey.wasPressedThisFrame) ||
+            (Keyboard.current.numpad5Key != null && Keyboard.current.numpad5Key.wasPressedThisFrame))
+        {
+            // Αυτό θα καλέσει OnTick -> ChangeFood(-1) κ.λπ.
+            GameManager.Instance.TurnManager.Tick();
+            // Προαιρετικά: animation trigger για "Wait"
+            // m_Animator.SetTrigger("Wait");
             return;
         }
 
@@ -117,6 +140,7 @@ public class PlayerController : MonoBehaviour
 
         if (cellData != null && cellData.Passable)
         {
+            // Κατανάλωση γύρου όταν επιχειρείται έγκυρη κίνηση
             GameManager.Instance.TurnManager.Tick();
 
             if (cellData.ContainedObject == null)
@@ -135,4 +159,5 @@ public class PlayerController : MonoBehaviour
     {
         m_Animator.SetTrigger("Attack");
     }
+
 }
