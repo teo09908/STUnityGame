@@ -3,7 +3,7 @@ using UnityEngine;
 public class CharacterStats : MonoBehaviour
 {
     [Header("UI References")]
-    public HealthBar healthBar;   
+    public HealthBar healthBar;   // Reference to the HealthBar in the UI
 
     [Header("Stats")]
     public int MaxHealth = 20;
@@ -13,15 +13,14 @@ public class CharacterStats : MonoBehaviour
     public int Strength = 3;
     public int Defense = 1;
     public int Speed = 1;
-    public int Accuracy = 75; // ποσοστό %
-    public int Evasion = 10;  // ποσοστό %
+    public int Accuracy = 75; // %
+    public int Evasion = 10;  // %
     public int Luck = 0;
 
-    void Awake()
+    private void Awake()
     {
         CurrentHealth = MaxHealth;
 
-        // Only update HealthBar if one exists
         if (healthBar != null)
         {
             healthBar.SetMaxHealth(MaxHealth);
@@ -32,7 +31,6 @@ public class CharacterStats : MonoBehaviour
     {
         int finalDamage = Mathf.Max(damage - Defense, 0);
 
-        // Evasion check
         if (Random.Range(0, 100) < Evasion)
         {
             Debug.Log($"{gameObject.name} dodged the attack!");
@@ -42,7 +40,6 @@ public class CharacterStats : MonoBehaviour
         CurrentHealth -= finalDamage;
         CurrentHealth = Mathf.Clamp(CurrentHealth, 0, MaxHealth);
 
-        // Update bar if available
         if (healthBar != null)
         {
             healthBar.SetHealth(CurrentHealth);
@@ -61,15 +58,21 @@ public class CharacterStats : MonoBehaviour
         return Random.Range(0, 100) < Accuracy;
     }
 
-    void Die()
+    public void Heal(int amount)
+    {
+        CurrentHealth = Mathf.Min(CurrentHealth + amount, MaxHealth);
+
+        if (healthBar != null)
+        {
+            healthBar.SetHealth(CurrentHealth);
+        }
+
+        Debug.Log($"{gameObject.name} healed {amount} HP. HP = {CurrentHealth}/{MaxHealth}");
+    }
+
+    private void Die()
     {
         Debug.Log($"{gameObject.name} died!");
         Destroy(gameObject);
     }
-    public void Heal(int amount)
-    {
-        CurrentHealth = Mathf.Min(CurrentHealth + amount, MaxHealth);
-        healthBar.SetHealth(CurrentHealth);
-    }
-
 }

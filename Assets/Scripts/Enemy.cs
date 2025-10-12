@@ -17,9 +17,10 @@ public class Enemy : CellObject
         }
 
         // Subscribe to TurnManager
-        GameManager.Instance.TurnManager.OnTick += TurnHappened;
+        if (GameManager.Instance?.TurnManager != null)
+            GameManager.Instance.TurnManager.OnTick += TurnHappened;
 
-        // Subscribe to death event if CharacterStats has one
+        // Subscribe to death event
         if (m_Stats != null)
             m_Stats.OnDeath += Die;
     }
@@ -46,38 +47,18 @@ public class Enemy : CellObject
         {
             // Player attacks enemy
             m_Stats.TakeDamage(playerStats.Strength);
+            CheckDeath();
         }
 
-        // Player does NOT move into the enemy’s cell
+        // Player does NOT move into the enemyâ€™s cell
         return false;
-    }
-
-    private bool MoveTo(Vector2Int coord)
-    {
-        var board = GameManager.Instance.BoardManager;
-        var targetCell = board.GetCellData(coord);
-
-        if (targetCell == null
-            || !targetCell.Passable
-            || targetCell.ContainedObject != null)
-        {
-            return false;
-        }
-
-        // Remove from current cell
-        var currentCell = board.GetCellData(m_Cell);
-        currentCell.ContainedObject = null;
-
-        // Move to new cell
-        targetCell.ContainedObject = this;
-        m_Cell = coord;
-        transform.position = board.CellToWorld(coord);
-
-        return true;
     }
 
     private void TurnHappened()
     {
+        if (m_Stats == null || m_Stats.CurrentHealth <= 0)
+            return;
+
         var playerCell = GameManager.Instance.PlayerController.Cell;
 
         int xDist = playerCell.x - m_Cell.x;
@@ -86,23 +67,16 @@ public class Enemy : CellObject
         int absXDist = Mathf.Abs(xDist);
         int absYDist = Mathf.Abs(yDist);
 
-        if ((xDist == 0 && absYDist == 1)
-            || (yDist == 0 && absXDist == 1))
+        // Adjacent to player â†’ attack
+        if ((xDist == 0 && absYDist == 1) || (yDist == 0 && absXDist == 1))
         {
-            // Adjacent to player attack
             GetComponent<Animator>().SetTrigger("Attack");
 
             var playerStats = GameManager.Instance.PlayerController.GetComponent<CharacterStats>();
-            if (m_Stats != null && playerStats != null)
+            if (playerStats != null && m_Stats.TryHit())
             {
-                if (m_Stats.TryHit())
-                {
-                    playerStats.TakeDamage(m_Stats.Strength);
-                }
-                else
-                {
-                    Debug.Log("Enemy attack missed!");
-                }
+                playerStats.TakeDamage(m_Stats.Strength);
+                CheckDeath();
             }
         }
         else
@@ -111,39 +85,74 @@ public class Enemy : CellObject
             if (absXDist > absYDist)
             {
                 if (!TryMoveInX(xDist))
-                {
                     TryMoveInY(yDist);
-                }
             }
             else
             {
                 if (!TryMoveInY(yDist))
-                {
                     TryMoveInX(xDist);
-                }
             }
         }
     }
 
+    private bool MoveTo(Vector2Int coord)
+    {
+        var board = GameManager.Instance.BoardManager;
+        var targetCell = board.GetCellData(coord);
+
+        if (targetCell == null || !targetCell.Passable || targetCell.ContainedObject != null)
+            return false;
+
+        var currentCell = board.GetCellData(m_Cell);
+        currentCell.ContainedObject = null;
+
+        targetCell.ContainedObject = this;
+        m_Cell = coord;
+        transform.position = board.CellToWorld(coord);
+
+        return true;
+    }
+
     private bool TryMoveInX(int xDist)
     {
-        if (xDist > 0)
-            return MoveTo(m_Cell + Vector2Int.right);
-
-        return MoveTo(m_Cell + Vector2Int.left);
+        return xDist > 0 ? MoveTo(m_Cell + Vector2Int.right) : MoveTo(m_Cell + Vector2Int.left);
     }
 
     private bool TryMoveInY(int yDist)
     {
-        if (yDist > 0)
-            return MoveTo(m_Cell + Vector2Int.up);
-
-        return MoveTo(m_Cell + Vector2Int.down);
+        return yDist > 0 ? MoveTo(m_Cell + Vector2Int.up) : MoveTo(m_Cell + Vector2Int.down);
     }
 
-  
-    //  Item Drop System
-    
+    private void CheckDeath()
+    {
+        if (m_Stats.CurrentHealth <= 0)
+        {
+            DropFood();
+            Destroy(gameObject);
+        }
+    }
+
+    private void DropFood()
+    {
+        var foodPrefab = PrefabDatabase.Instance?.piePrefab;
+        if (foodPrefab != null)
+        {
+            var board = GameManager.Instance.BoardManager;
+            var cellPosition = board.CellToWorld(m_Cell);
+
+            GameObject food = Instantiate(foodPrefab, cellPosition, Quaternion.identity);
+
+            var cellData = board.GetCellData(m_Cell);
+            if (cellData != null)
+            {
+                var foodObj = food.GetComponent<CellObject>();
+                if (foodObj != null)
+                    cellData.ContainedObject = foodObj;
+            }
+        }
+    }
+
+    // --- Item Drop System ---
     private void Die()
     {
         Debug.Log($"{gameObject.name} died!");
@@ -154,7 +163,6 @@ public class Enemy : CellObject
         }
 
         // Optional: play death animation here
-
         Destroy(gameObject);
     }
 
@@ -162,7 +170,7 @@ public class Enemy : CellObject
     {
         if (ItemDropManager.Instance == null)
         {
-            Debug.LogWarning("No ItemDropManager in scene — cannot drop items.");
+            Debug.LogWarning("No ItemDropManager in scene â€“ cannot drop items.");
             return;
         }
 
