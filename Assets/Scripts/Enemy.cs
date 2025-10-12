@@ -17,55 +17,32 @@ public class Enemy : CellObject
 
     private void OnDestroy()
     {
-        GameManager.Instance.TurnManager.OnTick -= TurnHappened;
+        if (GameManager.Instance != null)
+            GameManager.Instance.TurnManager.OnTick -= TurnHappened;
     }
 
     public override void Init(Vector2Int coord)
     {
         base.Init(coord);
-        // Η ζωή του εχθρού πλέον ορίζεται από το CharacterStats
     }
 
-    // Όταν ο παίκτης προσπαθεί να μπει στο κελί με εχθρό
     public override bool PlayerWantsToEnter()
     {
         var playerStats = GameManager.Instance.PlayerController.GetComponent<CharacterStats>();
         if (playerStats != null && m_Stats != null)
         {
-            // Ο παίκτης επιτίθεται στον εχθρό
             m_Stats.TakeDamage(playerStats.Strength);
+            CheckDeath();
         }
 
-        // Ο παίκτης ΔΕΝ μπαίνει στο ίδιο κελί με τον εχθρό
         return false;
-    }
-
-    private bool MoveTo(Vector2Int coord)
-    {
-        var board = GameManager.Instance.BoardManager;
-        var targetCell = board.GetCellData(coord);
-
-        if (targetCell == null
-            || !targetCell.Passable
-            || targetCell.ContainedObject != null)
-        {
-            return false;
-        }
-
-        // Αφαίρεση του εχθρού από το τρέχον κελί
-        var currentCell = board.GetCellData(m_Cell);
-        currentCell.ContainedObject = null;
-
-        // Προσθήκη στο νέο κελί
-        targetCell.ContainedObject = this;
-        m_Cell = coord;
-        transform.position = board.CellToWorld(coord);
-
-        return true;
     }
 
     private void TurnHappened()
     {
+        if (m_Stats == null || m_Stats.CurrentHealth <= 0)
+            return;
+
         var playerCell = GameManager.Instance.PlayerController.Cell;
 
         int xDist = playerCell.x - m_Cell.x;
@@ -74,58 +51,86 @@ public class Enemy : CellObject
         int absXDist = Mathf.Abs(xDist);
         int absYDist = Mathf.Abs(yDist);
 
-        if ((xDist == 0 && absYDist == 1)
-            || (yDist == 0 && absXDist == 1))
+        if ((xDist == 0 && absYDist == 1) || (yDist == 0 && absXDist == 1))
         {
-            // Δίπλα στον παίκτη -> επίθεση
             GetComponent<Animator>().SetTrigger("Attack");
 
             var playerStats = GameManager.Instance.PlayerController.GetComponent<CharacterStats>();
-            if (m_Stats != null && playerStats != null)
+            if (playerStats != null && m_Stats.TryHit())
             {
-                if (m_Stats.TryHit())
-                {
-                    playerStats.TakeDamage(m_Stats.Strength);
-                }
-                else
-                {
-                    Debug.Log("Enemy attack missed!");
-                }
+                playerStats.TakeDamage(m_Stats.Strength);
+                CheckDeath();
             }
         }
         else
         {
-            // Κίνηση προς τον παίκτη
             if (absXDist > absYDist)
             {
                 if (!TryMoveInX(xDist))
-                {
                     TryMoveInY(yDist);
-                }
             }
             else
             {
                 if (!TryMoveInY(yDist))
-                {
                     TryMoveInX(xDist);
-                }
             }
         }
     }
 
+    private bool MoveTo(Vector2Int coord)
+    {
+        var board = GameManager.Instance.BoardManager;
+        var targetCell = board.GetCellData(coord);
+
+        if (targetCell == null || !targetCell.Passable || targetCell.ContainedObject != null)
+            return false;
+
+        var currentCell = board.GetCellData(m_Cell);
+        currentCell.ContainedObject = null;
+
+        targetCell.ContainedObject = this;
+        m_Cell = coord;
+        transform.position = board.CellToWorld(coord);
+
+        return true;
+    }
+
     private bool TryMoveInX(int xDist)
     {
-        if (xDist > 0)
-            return MoveTo(m_Cell + Vector2Int.right);
-
-        return MoveTo(m_Cell + Vector2Int.left);
+        return xDist > 0 ? MoveTo(m_Cell + Vector2Int.right) : MoveTo(m_Cell + Vector2Int.left);
     }
 
     private bool TryMoveInY(int yDist)
     {
-        if (yDist > 0)
-            return MoveTo(m_Cell + Vector2Int.up);
+        return yDist > 0 ? MoveTo(m_Cell + Vector2Int.up) : MoveTo(m_Cell + Vector2Int.down);
+    }
 
-        return MoveTo(m_Cell + Vector2Int.down);
+    private void CheckDeath()
+    {
+        if (m_Stats.CurrentHealth <= 0)
+        {
+            DropFood();
+            Destroy(gameObject);
+        }
+    }
+
+    private void DropFood()
+    {
+        var foodPrefab = PrefabDatabase.Instance?.piePrefab;
+        if (foodPrefab != null)
+        {
+            var board = GameManager.Instance.BoardManager;
+            var cellPosition = board.CellToWorld(m_Cell);
+
+            GameObject food = Instantiate(foodPrefab, cellPosition, Quaternion.identity);
+
+            var cellData = board.GetCellData(m_Cell);
+            if (cellData != null)
+            {
+                var foodObj = food.GetComponent<CellObject>();
+                if (foodObj != null)
+                    cellData.ContainedObject = foodObj;
+            }
+        }
     }
 }
