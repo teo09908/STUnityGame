@@ -3,11 +3,12 @@ using UnityEngine;
 public class CharacterStats : MonoBehaviour
 {
     [Header("UI References")]
-    public HealthBar healthBar;   // Optional – only used if assigned
+    public HealthBar healthBar;   
 
     [Header("Stats")]
     public int MaxHealth = 20;
     public int CurrentHealth { get; private set; }
+    public event System.Action OnDeath;
 
     public int Strength = 3;
     public int Defense = 1;
@@ -65,4 +66,10 @@ public class CharacterStats : MonoBehaviour
         Debug.Log($"{gameObject.name} died!");
         Destroy(gameObject);
     }
+    public void Heal(int amount)
+    {
+        CurrentHealth = Mathf.Min(CurrentHealth + amount, MaxHealth);
+        healthBar.SetHealth(CurrentHealth);
+    }
+
 }
