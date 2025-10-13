@@ -1,22 +1,21 @@
 using UnityEngine;
 
-public class PrefabDatabase : MonoBehaviour
+public class Chest : MonoBehaviour
 {
-    public static PrefabDatabase Instance;
+    public GameObject[] lootItems;
 
-    [Header("Food Prefabs")]
-    public GameObject piePrefab; // Το prefab που ήδη έχεις
+    private bool isOpened = false;
 
-    private void Awake()
+    public void Open(CharacterStats player)
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject); // optional, αν θέλεις να μείνει σε κάθε σκηνή
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        if (isOpened) return;
+        isOpened = true;
+
+        GameObject itemPrefab = lootItems[Random.Range(0, lootItems.Length)];
+        Item item = Instantiate(itemPrefab, transform.position + Vector3.up, Quaternion.identity).GetComponent<Item>();
+        item.ApplyEffect(player);
+
+        Debug.Log("Chest opened!");
+        Destroy(gameObject);
     }
 }

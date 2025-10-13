@@ -1,4 +1,3 @@
-// Opws kai to FoodObject -> inherits apto CellObject
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -9,12 +8,11 @@ public class WallObject : CellObject
 
     private int m_HealthPoint;
     private Tile m_OriginalTile;
-    public Tile DamagedTiles;  // holds damaged versions of the wall
+    public Tile DamagedTiles;
 
     public override void Init(Vector2Int cell)
     {
         base.Init(cell);
-
         m_HealthPoint = MaxHealth;
 
         m_OriginalTile = GameManager.Instance.BoardManager.GetCellTile(cell);
@@ -23,7 +21,6 @@ public class WallObject : CellObject
 
     public override bool PlayerWantsToEnter()
     {
-        // Call the Attack method on the PlayerController
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
         {
@@ -38,20 +35,29 @@ public class WallObject : CellObject
 
         if (m_HealthPoint == 1)
         {
-            // Update tile to damaged version when 1 HP left
             GameManager.Instance.BoardManager.SetCellTile(m_Cell, DamagedTiles);
-            return false;  // Wall still blocking
+            return false;
         }
 
         if (m_HealthPoint <= 0)
         {
-            // Restore original tile and destroy wall object
+            // 30% drop chance
+            float dropChance = 0.3f;
+            if (Random.value < dropChance && ItemDropManager.Instance != null)
+            {
+                GameObject itemPrefab = ItemDropManager.Instance.GetRandomDrop();
+                if (itemPrefab != null)
+                {
+                    Instantiate(itemPrefab, transform.position, Quaternion.identity);
+                }
+            }
+
+            // Restore tile and remove wall
             GameManager.Instance.BoardManager.SetCellTile(m_Cell, m_OriginalTile);
             Destroy(gameObject);
-            return true;  // Player can enter now
+            return true;
         }
 
         return false;
     }
-
 }

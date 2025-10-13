@@ -4,10 +4,6 @@ public class Enemy : CellObject
 {
     private CharacterStats m_Stats;
 
-    [Header("Item Drop Settings")]
-    [Range(0f, 1f)] public float dropChance = 0.3f; // 30% chance
-    public bool canDropItems = true;
-
     private void Awake()
     {
         m_Stats = GetComponent<CharacterStats>();
@@ -16,11 +12,9 @@ public class Enemy : CellObject
             Debug.LogError("Enemy is missing CharacterStats component!");
         }
 
-        // Subscribe to TurnManager
         if (GameManager.Instance?.TurnManager != null)
             GameManager.Instance.TurnManager.OnTick += TurnHappened;
 
-        // Subscribe to death event
         if (m_Stats != null)
             m_Stats.OnDeath += Die;
     }
@@ -37,7 +31,6 @@ public class Enemy : CellObject
     public override void Init(Vector2Int coord)
     {
         base.Init(coord);
-        // Enemy health etc. are defined in CharacterStats
     }
 
     public override bool PlayerWantsToEnter()
@@ -45,12 +38,10 @@ public class Enemy : CellObject
         var playerStats = GameManager.Instance.PlayerController.GetComponent<CharacterStats>();
         if (playerStats != null && m_Stats != null)
         {
-            // Player attacks enemy
             m_Stats.TakeDamage(playerStats.Strength);
             CheckDeath();
         }
 
-        // Player does NOT move into the enemy’s cell
         return false;
     }
 
@@ -60,14 +51,12 @@ public class Enemy : CellObject
             return;
 
         var playerCell = GameManager.Instance.PlayerController.Cell;
-
         int xDist = playerCell.x - m_Cell.x;
         int yDist = playerCell.y - m_Cell.y;
 
         int absXDist = Mathf.Abs(xDist);
         int absYDist = Mathf.Abs(yDist);
 
-        // Adjacent to player → attack
         if ((xDist == 0 && absYDist == 1) || (yDist == 0 && absXDist == 1))
         {
             GetComponent<Animator>().SetTrigger("Attack");
@@ -81,7 +70,6 @@ public class Enemy : CellObject
         }
         else
         {
-            // Move toward player
             if (absXDist > absYDist)
             {
                 if (!TryMoveInX(xDist))
@@ -127,58 +115,25 @@ public class Enemy : CellObject
     {
         if (m_Stats.CurrentHealth <= 0)
         {
-            DropFood();
-            Destroy(gameObject);
+            Die();
         }
     }
 
-    private void DropFood()
-    {
-        var foodPrefab = PrefabDatabase.Instance?.piePrefab;
-        if (foodPrefab != null)
-        {
-            var board = GameManager.Instance.BoardManager;
-            var cellPosition = board.CellToWorld(m_Cell);
-
-            GameObject food = Instantiate(foodPrefab, cellPosition, Quaternion.identity);
-
-            var cellData = board.GetCellData(m_Cell);
-            if (cellData != null)
-            {
-                var foodObj = food.GetComponent<CellObject>();
-                if (foodObj != null)
-                    cellData.ContainedObject = foodObj;
-            }
-        }
-    }
-
-    // --- Item Drop System ---
-    private void Die()
+    void Die()
     {
         Debug.Log($"{gameObject.name} died!");
 
-        if (canDropItems && Random.value < dropChance)
+        // 40% drop chance
+        float dropChance = 0.4f;
+        if (Random.value < dropChance && ItemDropManager.Instance != null)
         {
-            DropRandomItem();
+            GameObject itemPrefab = ItemDropManager.Instance.GetRandomDrop();
+            if (itemPrefab != null)
+            {
+                Instantiate(itemPrefab, transform.position, Quaternion.identity);
+            }
         }
 
-        // Optional: play death animation here
         Destroy(gameObject);
-    }
-
-    private void DropRandomItem()
-    {
-        if (ItemDropManager.Instance == null)
-        {
-            Debug.LogWarning("No ItemDropManager in scene – cannot drop items.");
-            return;
-        }
-
-        GameObject itemPrefab = ItemDropManager.Instance.GetRandomDrop();
-        if (itemPrefab != null)
-        {
-            Instantiate(itemPrefab, transform.position, Quaternion.identity);
-            Debug.Log($"{gameObject.name} dropped {itemPrefab.name}");
-        }
     }
 }

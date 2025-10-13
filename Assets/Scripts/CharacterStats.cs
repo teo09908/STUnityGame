@@ -6,8 +6,8 @@ public class CharacterStats : MonoBehaviour
     public HealthBar healthBar;   // Reference to the HealthBar in the UI
 
     [Header("Stats")]
-    public int MaxHealth = 20;
-    public int CurrentHealth { get; private set; }
+    public int MaxHealth = 50;
+    public int CurrentHealth { get; set; }
     public event System.Action OnDeath;
 
     public int Strength = 3;
