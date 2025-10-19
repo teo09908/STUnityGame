@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem; // νέο Input System
 
 public class PauseMenu : MonoBehaviour
 {
@@ -13,16 +13,13 @@ public class PauseMenu : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))  // Fixed parenthesis
+        // Νέος τρόπος για "Escape"
+        if (Keyboard.current.escapeKey.wasPressedThisFrame)
         {
             if (isPaused)
-            {
                 ResumeGame();
-            }
             else
-            {
                 PauseGame();
-            }
         }
     }
 
@@ -43,7 +40,7 @@ public class PauseMenu : MonoBehaviour
     public void GoToMainMenu()
     {
         Time.timeScale = 1f;
-        SceneManager.LoadScene("Main");
+        UnityEngine.SceneManagement.SceneManager.LoadScene("Main");
     }
 
     public void QuitGame()
