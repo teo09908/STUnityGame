@@ -20,12 +20,13 @@ public class GameManager : MonoBehaviour
     private int m_Defense = 1;
     private int m_Speed = 5;
 
+
+
     // --- UI Elements ---
     private VisualElement m_HUDPanel;
     private VisualElement m_GameOverPanel;
 
     private Label m_FoodLabel;
-    private Label m_HealthLabel;
     private Label m_StrengthLabel;
     private Label m_DefenseLabel;
     private Label m_SpeedLabel;
@@ -56,7 +57,6 @@ public class GameManager : MonoBehaviour
 
         // --- HUD Labels ---
         m_FoodLabel = root.Q<Label>("FoodLabel");
-        m_HealthLabel = root.Q<Label>("HealthLabel");
         m_StrengthLabel = root.Q<Label>("StrengthLabel");
         m_DefenseLabel = root.Q<Label>("DefenseLabel");
         m_SpeedLabel = root.Q<Label>("SpeedLabel");
@@ -166,7 +166,6 @@ public class GameManager : MonoBehaviour
     private void UpdateHUD()
     {
         m_FoodLabel.text = $"Food: {m_FoodAmount}";
-        m_HealthLabel.text = $"Health: {m_Health}/{m_MaxHealth}";
         m_StrengthLabel.text = $"Strength: {m_Strength}";
         m_DefenseLabel.text = $"Defense: {m_Defense}";
         m_SpeedLabel.text = $"Speed: {m_Speed}";
@@ -199,8 +198,6 @@ public class GameManager : MonoBehaviour
         }
 
         // Ενημέρωση των Labels στο UI
-        if (m_HealthLabel != null)
-            m_HealthLabel.text = $"Health: {stats.CurrentHealth}/{stats.MaxHealth}";
         if (m_StrengthLabel != null)
             m_StrengthLabel.text = $"Strength: {stats.Strength}";
         if (m_DefenseLabel != null)

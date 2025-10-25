@@ -227,6 +227,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3388158de99061249aa5979ce97a48d4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  mainMenuPanel: {fileID: 1473100939}
+  OnPlayPressed:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!224 &626304240
 RectTransform:
   m_ObjectHideFlags: 0

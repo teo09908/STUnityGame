@@ -48,7 +48,9 @@ public class WallObject : CellObject
                 GameObject itemPrefab = ItemDropManager.Instance.GetRandomDrop();
                 if (itemPrefab != null)
                 {
-                    Instantiate(itemPrefab, transform.position, Quaternion.identity);
+                    GameObject drop = Instantiate(itemPrefab, transform.position, Quaternion.identity);
+                    drop.transform.SetParent(GameManager.Instance.BoardManager.transform); // make it child of board
+
                 }
             }
 

@@ -1,24 +1,26 @@
 using UnityEngine;
-using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 
 public class MainMenu : MonoBehaviour
 {
-    public GameObject mainMenuPanel; // drag & drop MainMenuPanel here
-    public UnityEvent OnPlayPressed;  // event για να ξεκινήσει το παιχνίδι (π.χ. spawn rooms)
+    public GameObject mainMenuPanel; // assign MainMenuPanel here
 
     void Start()
     {
-        // Κρύβουμε το παιχνίδι μέχρι να πατηθεί Play
-        Time.timeScale = 0f; // παγώνει το παιχνίδι
+        if (mainMenuPanel != null)
+            mainMenuPanel.SetActive(true);
+
+        // allow UI to work
+        Time.timeScale = 0f;
     }
 
     public void PlayGame()
     {
-        mainMenuPanel.SetActive(false);
-        Time.timeScale = 1f; // ξεπαγώνει το παιχνίδι
+        // unfreeze time for gameplay
+        Time.timeScale = 1f;
 
-        if (OnPlayPressed != null)
-            OnPlayPressed.Invoke(); // ξεκινάει το board / event system
+        // load the Main scene
+        SceneManager.LoadScene("Main");
     }
 
     public void QuitGame()
@@ -27,3 +29,4 @@ public class MainMenu : MonoBehaviour
         Debug.Log("Quit Game!");
     }
 }
+

@@ -10,9 +10,9 @@ public class CharacterStats : MonoBehaviour
     public int CurrentHealth { get; set; }
     public event System.Action OnDeath;
 
-    public int Strength = 3;
-    public int Defense = 1;
-    public int Speed = 1;
+    public int Strength;
+    public int Defense;
+    public int Speed;
     public int Accuracy = 75; // %
     public int Evasion = 10;  // %
     public int Luck = 0;

@@ -13,7 +13,6 @@ public class PlayerController : MonoBehaviour
     public Animator animator;
     public Vector2Int Cell => m_CellPosition;
 
-
     private void Awake()
     {
         m_Animator = GetComponent<Animator>();
@@ -55,14 +54,10 @@ public class PlayerController : MonoBehaviour
         animator.SetTrigger("Damaged");
     }
 
-
     public void Init()
     {
         m_IsGameOver = false;
         GameManager.Instance.UpdateStatsUI(); // ενημέρωσε τα στατιστικά στην αρχή
-
-
-
     }
 
     private void Update()
@@ -85,22 +80,23 @@ public class PlayerController : MonoBehaviour
             {
                 m_IsMoving = false;
                 m_Animator.SetBool("Moving", false);
+
+                // Αντικείμενο που υπάρχει στο κελί
                 var cellData = m_Board.GetCellData(m_CellPosition);
                 if (cellData.ContainedObject != null)
                     cellData.ContainedObject.PlayerEntered();
+
+                // ---- ΝΕΟ: Έλεγχος για αντικείμενα που μπορούν να ληφθούν ----
+                CheckForPickup();
             }
             return;
         }
 
-        // --- WAIT TURN: κατανάλωση γύρου χωρίς κίνηση ---
-        // Space ή Numpad5 (προαιρετικά)
+        // --- WAIT TURN ---
         if ((Keyboard.current.spaceKey != null && Keyboard.current.spaceKey.wasPressedThisFrame) ||
             (Keyboard.current.numpad5Key != null && Keyboard.current.numpad5Key.wasPressedThisFrame))
         {
-            // Αυτό θα καλέσει OnTick -> ChangeFood(-1) κ.λπ.
             GameManager.Instance.TurnManager.Tick();
-            // Προαιρετικά: animation trigger για "Wait"
-            // m_Animator.SetTrigger("Wait");
             return;
         }
 
@@ -140,7 +136,6 @@ public class PlayerController : MonoBehaviour
 
         if (cellData != null && cellData.Passable)
         {
-            // Κατανάλωση γύρου όταν επιχειρείται έγκυρη κίνηση
             GameManager.Instance.TurnManager.Tick();
 
             if (cellData.ContainedObject == null)
@@ -155,9 +150,27 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    private void CheckForPickup()
+    {
+        // Έλεγξε αν υπάρχει αντικείμενο HealthItem στην τρέχουσα θέση
+        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, 0.1f);
+        foreach (var hit in hits)
+        {
+            HealthItem item = hit.GetComponent<HealthItem>();
+            if (item != null)
+            {
+                CharacterStats stats = GetComponent<CharacterStats>();
+                if (stats != null)
+                {
+                    item.ApplyEffect(stats);
+                    return; // Μόλις πάρεις ένα αντικείμενο, βγες
+                }
+            }
+        }
+    }
+
     public void Attack()
     {
         m_Animator.SetTrigger("Attack");
     }
-
 }
