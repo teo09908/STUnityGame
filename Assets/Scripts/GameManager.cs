@@ -20,17 +20,13 @@ public class GameManager : MonoBehaviour
     private int m_Defense = 1;
     private int m_Speed = 5;
 
-
-
     // --- UI Elements ---
     private VisualElement m_HUDPanel;
     private VisualElement m_GameOverPanel;
-
     private Label m_FoodLabel;
     private Label m_StrengthLabel;
     private Label m_DefenseLabel;
     private Label m_SpeedLabel;
-
     private Label m_GameOverMessage;
 
     private void Awake()
@@ -40,7 +36,6 @@ public class GameManager : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-
         Instance = this;
     }
 
@@ -72,11 +67,9 @@ public class GameManager : MonoBehaviour
     }
 
     // === MAIN GAME LOGIC ===
-
     public void StartNewGame()
     {
         m_GameOverPanel.style.visibility = Visibility.Hidden;
-
         m_CurrentLevel = 0;
         m_FoodAmount = 50;
         m_Health = 10;
@@ -88,39 +81,36 @@ public class GameManager : MonoBehaviour
         UpdateHUD();
 
         BoardManager.Clean();
-        BoardManager.Init(m_CurrentLevel); //  Πρέπει να γίνει πριν το Spawn
+        BoardManager.Init(m_CurrentLevel);
 
+        // Πρέπει να γίνει πριν το Spawn
         PlayerController.Init();
-        PlayerController.Spawn(BoardManager, new Vector2Int(1, 1)); //  περνάμε το BoardManager
+        PlayerController.Spawn(BoardManager, new Vector2Int(1, 1));
 
         NewLevel();
     }
-
 
     public void NewLevel()
     {
         m_CurrentLevel++;
         BoardManager.Width = 10 + m_CurrentLevel;
         BoardManager.Height = 10 + m_CurrentLevel;
-
         Debug.Log($"New Level: {m_CurrentLevel} (Board: {BoardManager.Width}x{BoardManager.Height})");
 
         BoardManager.Clean();
         BoardManager.Init(m_CurrentLevel);
-
         PlayerController.Spawn(BoardManager, new Vector2Int(1, 1));
+
         UpdateHUD();
     }
 
     // === TURN MANAGEMENT ===
-
     private void OnTurnHappen()
     {
         ChangeFood(-1);
     }
 
     // === STATS MODIFIERS ===
-
     public void ChangeFood(int amount)
     {
         m_FoodAmount += amount;
@@ -162,7 +152,6 @@ public class GameManager : MonoBehaviour
     }
 
     // === HUD UPDATE ===
-
     private void UpdateHUD()
     {
         m_FoodLabel.text = $"Food: {m_FoodAmount}";
@@ -172,7 +161,6 @@ public class GameManager : MonoBehaviour
     }
 
     // === GAME OVER ===
-
     private void GameOver()
     {
         PlayerController.GameOver();
@@ -180,7 +168,7 @@ public class GameManager : MonoBehaviour
         m_GameOverMessage.text = $"Game Over!\n\nSurvived {m_CurrentLevel} levels";
     }
 
-    // === GETTERS (αν τα χρειαστείς αλλού) ===
+    // === GETTERS ===
     public int Food => m_FoodAmount;
     public int Health => m_Health;
     public int Strength => m_Strength;
@@ -198,12 +186,8 @@ public class GameManager : MonoBehaviour
         }
 
         // Ενημέρωση των Labels στο UI
-        if (m_StrengthLabel != null)
-            m_StrengthLabel.text = $"Strength: {stats.Strength}";
-        if (m_DefenseLabel != null)
-            m_DefenseLabel.text = $"Defense: {stats.Defense}";
-        if (m_SpeedLabel != null)
-            m_SpeedLabel.text = $"Speed: {stats.Speed}";
+        if (m_StrengthLabel != null) m_StrengthLabel.text = $"Strength: {stats.Strength}";
+        if (m_DefenseLabel != null) m_DefenseLabel.text = $"Defense: {stats.Defense}";
+        if (m_SpeedLabel != null) m_SpeedLabel.text = $"Speed: {stats.Speed}";
     }
-
 }
