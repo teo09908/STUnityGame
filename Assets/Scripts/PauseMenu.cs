@@ -1,61 +1,54 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
-using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem;   // NEW INPUT SYSTEM
 
 public class PauseMenu : MonoBehaviour
 {
-    [Header("Pause Menu Settings")]
-    public GameObject pauseMenu; // drag your PauseMenuPanel (Canvas) here
-    public static bool isPaused = false;
+    public GameObject pauseMenuUI;
+    private bool isPaused = false;
 
     private void Start()
     {
-        if (pauseMenu != null)
-            pauseMenu.SetActive(false);
+        Time.timeScale = 1f;
+
+        if (pauseMenuUI != null)
+            pauseMenuUI.SetActive(false);
     }
 
     private void Update()
     {
-        if (Keyboard.current.escapeKey.wasPressedThisFrame)
+        // ESC from new Input System
+        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
         {
+            Debug.Log("ESC PRESSED (Input System)!");
+
             if (isPaused)
-                ResumeGame();
+                Resume();
             else
-                PauseGame();
+                Pause();
         }
     }
 
-    public void PauseGame()
+    public void Resume()
     {
-        if (pauseMenu == null) return;
+        if (pauseMenuUI != null)
+            pauseMenuUI.SetActive(false);
 
-        pauseMenu.SetActive(true);
-        Time.timeScale = 0f; // freeze gameplay
-        isPaused = true;
-
-        // Ensure UI works while paused
-        Cursor.visible = true;
-        Cursor.lockState = CursorLockMode.None;
-    }
-
-    public void ResumeGame()
-    {
-        if (pauseMenu == null) return;
-
-        pauseMenu.SetActive(false);
         Time.timeScale = 1f;
         isPaused = false;
     }
 
-    public void GoToMainMenu()
+    private void Pause()
     {
-        Time.timeScale = 1f;
-        SceneManager.LoadScene("StartScene"); // change to your main menu scene name
+        if (pauseMenuUI != null)
+            pauseMenuUI.SetActive(true);
+
+        Time.timeScale = 0f;
+        isPaused = true;
     }
 
     public void QuitGame()
     {
-        Debug.Log("Quit Game!");
+        Debug.Log("QUIT GAME");
         Application.Quit();
     }
 }
